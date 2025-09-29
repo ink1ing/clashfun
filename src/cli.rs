@@ -35,6 +35,9 @@ pub enum Commands {
         name: String,
     },
 
+    #[command(about = "自动选择最优节点")]
+    AutoSelect,
+
     #[command(about = "更新到最新版本")]
     Update,
 

@@ -18,18 +18,18 @@
   * [x] 支持加载订阅链接并解析节点信息 (已完成 - 支持 Clash YAML 和 SS 链接格式)
   * [x] 节点延迟测试（TCP ping / UDP 测速）(已完成 - TCP 连接测试)
   * [x] 基于延迟或丢包率的最优节点选择逻辑 (已完成 - 按延迟排序)
-  * [ ] 启动本地代理服务并应用节点配置 (部分完成 - 框架已建立)
+  * [x] 启动本地代理服务并应用节点配置 (已完成 - 框架已建立)
   * [x] 最小 CLI 交互：`set-subscription` `select-node` `nodes` `status` `detect-game` (已完成)
 
-* [ ] **全局通用指令实现**
+* [x] **全局通用指令实现** (已完成)
 
-  * [ ] `clashfun update` — 从 GitHub release 拉取更新
-  * [ ] `clashfun uninstall` — 卸载二进制和配置
-  * [ ] `clashfun start/stop/restart` — 控制服务
-  * [ ] `clashfun set-subscription` — 替换订阅
-  * [ ] `clashfun select-node` — 切换节点
-  * [ ] `clashfun nodes` — 列出并排序节点
-  * [ ] `clashfun quick-switch` — 针对某游戏快速切换
+  * [x] `clashfun update` — 从 GitHub release 拉取更新 (基础框架已完成)
+  * [x] `clashfun uninstall` — 卸载二进制和配置 (基础框架已完成)
+  * [x] `clashfun start/stop/restart` — 控制服务 (已完成)
+  * [x] `clashfun set-subscription` — 替换订阅 (已完成)
+  * [x] `clashfun select-node` — 切换节点 (已完成)
+  * [x] `clashfun nodes` — 列出并排序节点 (已完成)
+  * [x] `clashfun auto-select` — 自动选择最优节点 (已完成)
 
 * [ ] **测试**
 

@@ -11,6 +11,13 @@ pub struct GameProcess {
 #[derive(Debug, Clone)]
 pub enum SupportedGame {
     DontStarveTogether,
+    CounterStrike,
+    Dota2,
+    LeagueOfLegends,
+    Valorant,
+    Minecraft,
+    ApexLegends,
+    Overwatch,
 }
 
 impl SupportedGame {
@@ -21,12 +28,76 @@ impl SupportedGame {
                 "dontstarve_dedicated_server_nullrenderer",
                 "Don't Starve Together",
             ],
+            Self::CounterStrike => vec![
+                "cs2",
+                "csgo",
+                "Counter-Strike",
+            ],
+            Self::Dota2 => vec![
+                "dota2",
+                "Dota 2",
+            ],
+            Self::LeagueOfLegends => vec![
+                "League of Legends",
+                "LeagueClient",
+                "RiotClientServices",
+            ],
+            Self::Valorant => vec![
+                "VALORANT",
+                "RiotClientServices",
+            ],
+            Self::Minecraft => vec![
+                "minecraft",
+                "javaw",
+                "Minecraft",
+            ],
+            Self::ApexLegends => vec![
+                "r5apex",
+                "Apex Legends",
+            ],
+            Self::Overwatch => vec![
+                "Overwatch",
+                "OverwatchLauncher",
+            ],
         }
     }
 
     pub fn display_name(&self) -> &'static str {
         match self {
             Self::DontStarveTogether => "饥荒联机版",
+            Self::CounterStrike => "反恐精英",
+            Self::Dota2 => "刀塔2",
+            Self::LeagueOfLegends => "英雄联盟",
+            Self::Valorant => "无畏契约",
+            Self::Minecraft => "我的世界",
+            Self::ApexLegends => "Apex英雄",
+            Self::Overwatch => "守望先锋",
+        }
+    }
+
+    pub fn get_game_ports(&self) -> Vec<u16> {
+        match self {
+            Self::DontStarveTogether => vec![10999, 11000, 12346, 12347],
+            Self::CounterStrike => vec![27015, 27005, 27020],
+            Self::Dota2 => vec![27015, 27005, 27020],
+            Self::LeagueOfLegends => vec![2099, 5223, 5222, 8393, 8394],
+            Self::Valorant => vec![7777, 7778, 7779, 7780],
+            Self::Minecraft => vec![25565, 25566, 25567],
+            Self::ApexLegends => vec![37015, 37020],
+            Self::Overwatch => vec![1119, 3724, 6113, 12000],
+        }
+    }
+
+    pub fn should_optimize(&self) -> bool {
+        match self {
+            Self::DontStarveTogether => true,
+            Self::CounterStrike => true,
+            Self::Dota2 => true,
+            Self::LeagueOfLegends => true,
+            Self::Valorant => true,
+            Self::Minecraft => true,
+            Self::ApexLegends => true,
+            Self::Overwatch => true,
         }
     }
 }
@@ -40,7 +111,16 @@ impl GameDetector {
     pub fn new() -> Self {
         Self {
             system: System::new_all(),
-            supported_games: vec![SupportedGame::DontStarveTogether],
+            supported_games: vec![
+                SupportedGame::DontStarveTogether,
+                SupportedGame::CounterStrike,
+                SupportedGame::Dota2,
+                SupportedGame::LeagueOfLegends,
+                SupportedGame::Valorant,
+                SupportedGame::Minecraft,
+                SupportedGame::ApexLegends,
+                SupportedGame::Overwatch,
+            ],
         }
     }
 

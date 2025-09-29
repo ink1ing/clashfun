@@ -49,15 +49,33 @@ async fn run(cli: Cli) -> anyhow::Result<()> {
 
             let sub_manager = subscription::SubscriptionManager::new();
             let clash_config = sub_manager.fetch_subscription(subscription_url).await?;
-            let nodes = sub_manager.parse_nodes(&clash_config)?;
+            let mut nodes = sub_manager.parse_nodes(&clash_config)?;
+
+            // 测试所有节点延迟并排序
+            println!("🔍 测试节点延迟...");
+            if let Err(e) = sub_manager.test_all_nodes(&mut nodes).await {
+                println!("⚠️  延迟测试失败: {}", e);
+            }
 
             let selected_node = nodes.iter()
                 .find(|n| &n.name == selected_node_name)
-                .ok_or_else(|| anyhow::anyhow!("找不到选中的节点: {}", selected_node_name))?;
+                .ok_or_else(|| anyhow::anyhow!("找不到选中的节点: {}", selected_node_name))?
+                .clone();
+
+            // 过滤出可用的备用节点（延迟 < 1000ms 且不是当前节点）
+            let backup_nodes: Vec<subscription::Node> = nodes
+                .into_iter()
+                .filter(|n| &n.name != selected_node_name && n.latency.unwrap_or(u32::MAX) < 1000)
+                .collect();
 
             // 创建代理服务器
             let proxy_server = Arc::new(ProxyServer::new(config.proxy_port));
             proxy_server.set_node(selected_node.clone()).await;
+
+            // 设置订阅URL和备用节点
+            proxy_server.set_subscription_url(subscription_url.clone()).await;
+            proxy_server.set_backup_nodes(backup_nodes.clone()).await;
+            println!("🔄 设置了 {} 个备用节点", backup_nodes.len());
 
             println!("🚀 正在启动代理服务器...");
             println!("📍 节点: {}", selected_node.name);
@@ -237,6 +255,55 @@ async fn run(cli: Cli) -> anyhow::Result<()> {
             info!("卸载 ClashFun...");
             // TODO: 实现卸载逻辑
             println!("🗑️  ClashFun 已卸载");
+            Ok(())
+        }
+        cli::Commands::AutoSelect => {
+            info!("自动选择最优节点...");
+
+            let mut config = config::Config::load()?;
+
+            if let Some(url) = &config.subscription_url {
+                println!("🔍 获取并测试所有节点...");
+
+                let sub_manager = subscription::SubscriptionManager::new();
+                match sub_manager.fetch_subscription(url).await {
+                    Ok(clash_config) => {
+                        match sub_manager.parse_nodes(&clash_config) {
+                            Ok(mut nodes) => {
+                                println!("🧪 测试节点延迟...");
+                                if let Err(e) = sub_manager.test_all_nodes(&mut nodes).await {
+                                    println!("⚠️  延迟测试失败: {}", e);
+                                }
+
+                                // 找到延迟最低的可用节点
+                                if let Some(best_node) = nodes.iter()
+                                    .filter(|n| n.latency.unwrap_or(u32::MAX) < u32::MAX)
+                                    .min_by_key(|n| n.latency.unwrap_or(u32::MAX)) {
+
+                                    config.selected_node = Some(best_node.name.clone());
+                                    config.save()?;
+
+                                    println!("🚀 自动选择最优节点: {}", best_node.name);
+                                    println!("📍 服务器: {}:{}", best_node.server, best_node.port);
+                                    println!("⚡ 延迟: {}ms", best_node.latency.unwrap_or(0));
+                                    println!("📊 协议: {}", best_node.protocol);
+                                } else {
+                                    println!("❌ 没有找到可用的节点");
+                                }
+                            }
+                            Err(e) => {
+                                println!("❌ 解析节点失败: {}", e);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        println!("❌ 获取订阅失败: {}", e);
+                    }
+                }
+            } else {
+                println!("❌ 请先设置订阅链接: clashfun set-subscription <URL>");
+            }
+
             Ok(())
         }
         cli::Commands::DetectGame => {
