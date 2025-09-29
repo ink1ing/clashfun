@@ -3,6 +3,8 @@ use env_logger;
 use log::{error, info};
 use std::process;
 use std::sync::Arc;
+use std::fs;
+use std::path::Path;
 
 mod cli;
 mod config;
@@ -34,12 +36,12 @@ async fn run(cli: Cli) -> anyhow::Result<()> {
 
             // 检查是否已配置订阅和节点
             if config.subscription_url.is_none() {
-                println!("❌ 请先设置订阅链接: clashfun set-subscription <URL>");
+                println!("❌ 请先设置订阅链接: cf set-subscription <URL>");
                 return Ok(());
             }
 
             if config.selected_node.is_none() {
-                println!("❌ 请先选择一个节点: clashfun select-node <NAME>");
+                println!("❌ 请先选择一个节点: cf select-node <NAME>");
                 return Ok(());
             }
 
@@ -191,7 +193,7 @@ async fn run(cli: Cli) -> anyhow::Result<()> {
             } else {
                 println!("🌐 节点列表:");
                 println!("  暂无可用节点，请先设置订阅链接");
-                println!("  使用命令: clashfun set-subscription <URL>");
+                println!("  使用命令: cf set-subscription <URL>");
             }
 
             Ok(())
@@ -204,7 +206,7 @@ async fn run(cli: Cli) -> anyhow::Result<()> {
             config.save()?;
 
             println!("✅ 订阅链接已设置: {}", url);
-            println!("💡 使用 'clashfun nodes' 查看可用节点");
+            println!("💡 使用 'cf nodes' 查看可用节点");
             Ok(())
         }
         cli::Commands::SelectNode { name } => {
@@ -226,7 +228,7 @@ async fn run(cli: Cli) -> anyhow::Result<()> {
                                     println!("📍 服务器: {}:{}", node.server, node.port);
                                 } else {
                                     println!("❌ 未找到包含 '{}' 的节点", name);
-                                    println!("💡 使用 'clashfun nodes' 查看可用节点");
+                                    println!("💡 使用 'cf nodes' 查看可用节点");
                                 }
                             }
                             Err(e) => {
@@ -239,7 +241,7 @@ async fn run(cli: Cli) -> anyhow::Result<()> {
                     }
                 }
             } else {
-                println!("❌ 请先设置订阅链接: clashfun set-subscription <URL>");
+                println!("❌ 请先设置订阅链接: cf set-subscription <URL>");
             }
 
             Ok(())
@@ -301,7 +303,7 @@ async fn run(cli: Cli) -> anyhow::Result<()> {
                     }
                 }
             } else {
-                println!("❌ 请先设置订阅链接: clashfun set-subscription <URL>");
+                println!("❌ 请先设置订阅链接: cf set-subscription <URL>");
             }
 
             Ok(())
@@ -334,6 +336,99 @@ async fn run(cli: Cli) -> anyhow::Result<()> {
                     println!("❌ 游戏检测失败: {}", e);
                 }
             }
+            Ok(())
+        }
+        cli::Commands::ForceUninstall => {
+            info!("执行一键卸载...");
+
+            println!("🗑️ 正在卸载 ClashFun...");
+
+            // 获取当前可执行文件路径
+            let current_exe = std::env::current_exe()?;
+            println!("📁 当前程序路径: {}", current_exe.display());
+
+            // 删除配置文件
+            if let Some(config_dir) = dirs::config_dir() {
+                let cf_config_dir = config_dir.join("cf");
+                if cf_config_dir.exists() {
+                    match fs::remove_dir_all(&cf_config_dir) {
+                        Ok(()) => println!("✅ 配置目录已删除: {}", cf_config_dir.display()),
+                        Err(e) => println!("⚠️  删除配置目录失败: {}", e),
+                    }
+                } else {
+                    println!("💡 没有找到配置目录");
+                }
+            }
+
+            // 删除缓存文件
+            if let Some(cache_dir) = dirs::cache_dir() {
+                let cf_cache_dir = cache_dir.join("cf");
+                if cf_cache_dir.exists() {
+                    match fs::remove_dir_all(&cf_cache_dir) {
+                        Ok(()) => println!("✅ 缓存目录已删除: {}", cf_cache_dir.display()),
+                        Err(e) => println!("⚠️  删除缓存目录失败: {}", e),
+                    }
+                } else {
+                    println!("💡 没有找到缓存目录");
+                }
+            }
+
+            println!("🎉 ClashFun 卸载完成！");
+            println!("💡 请手动删除可执行文件: {}", current_exe.display());
+            println!("💡 可以使用命令: rm {}", current_exe.display());
+
+            Ok(())
+        }
+        cli::Commands::Reset => {
+            info!("重置所有配置...");
+
+            println!("🔄 正在重置 ClashFun 配置...");
+
+            // 删除配置文件但保留程序
+            if let Some(config_dir) = dirs::config_dir() {
+                let cf_config_dir = config_dir.join("cf");
+                if cf_config_dir.exists() {
+                    match fs::remove_dir_all(&cf_config_dir) {
+                        Ok(()) => {
+                            println!("✅ 所有节点配置已清除");
+                            println!("📁 配置目录已删除: {}", cf_config_dir.display());
+                        },
+                        Err(e) => {
+                            println!("❌ 删除配置失败: {}", e);
+                            return Err(e.into());
+                        }
+                    }
+                } else {
+                    println!("💡 没有找到现有配置");
+                }
+            }
+
+            // 重新创建空的配置目录
+            let new_config = config::Config::default();
+            match new_config.save() {
+                Ok(()) => {
+                    println!("✅ 配置已重置为默认状态");
+                    println!("💡 现在可以重新设置订阅: cf set-subscription <URL>");
+                },
+                Err(e) => {
+                    println!("❌ 重置配置失败: {}", e);
+                    return Err(e);
+                }
+            }
+
+            // 删除缓存
+            if let Some(cache_dir) = dirs::cache_dir() {
+                let cf_cache_dir = cache_dir.join("cf");
+                if cf_cache_dir.exists() {
+                    match fs::remove_dir_all(&cf_cache_dir) {
+                        Ok(()) => println!("✅ 缓存已清除"),
+                        Err(e) => println!("⚠️  清除缓存失败: {}", e),
+                    }
+                }
+            }
+
+            println!("🎉 重置完成！ClashFun 已恢复到初始状态");
+
             Ok(())
         }
     }

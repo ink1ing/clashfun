@@ -30,40 +30,51 @@ curl -fsSL https://raw.githubusercontent.com/ink1ing/clashfun/main/install.sh | 
 
 ### 1. 设置订阅链接
 ```bash
-clashfun set-subscription https://your-clash-subscription-url
+cf set-subscription https://your-clash-subscription-url
 ```
 
 ### 2. 查看节点列表
 ```bash
-clashfun nodes
+cf nodes
 ```
 
 ### 3. 启动加速服务
 ```bash
-clashfun start
+cf start
 ```
 
 ### 4. 查看状态
 ```bash
-clashfun status
+cf status
 ```
 
 ## 📋 命令列表
 
 | 命令 | 描述 |
 |------|------|
-| `clashfun start` | 启动加速服务 |
-| `clashfun stop` | 停止加速服务 |
-| `clashfun status` | 查看运行状态 |
-| `clashfun nodes` | 列出所有节点 |
-| `clashfun select-node <name>` | 切换到指定节点 |
-| `clashfun set-subscription <url>` | 设置订阅链接 |
-| `clashfun update` | 更新到最新版本 |
-| `clashfun uninstall` | 卸载程序 |
+| `cf start` | 启动加速服务 |
+| `cf stop` | 停止加速服务 |
+| `cf status` | 查看运行状态 |
+| `cf nodes` | 列出所有节点 |
+| `cf select-node <name>` | 切换到指定节点 |
+| `cf auto-select` | 自动选择最优节点 |
+| `cf set-subscription <url>` | 设置订阅链接 |
+| `cf detect-game` | 检测运行中的游戏 |
+| `cf update` | 更新到最新版本 |
+| `cf uninstall` | 卸载程序 |
+| `cf force-uninstall` | 一键卸载程序和所有配置 |
+| `cf reset` | 清除所有配置恢复原始状态 |
 
 ## 🎮 支持的游戏
 
 - Steam《饥荒联机版》(Don't Starve Together)
+- 《反恐精英》(Counter-Strike)
+- 《刀場2》(Dota2)
+- 《英雄联盟》(League of Legends)
+- 《无畏契约》(Valorant)
+- 《我的世界》(Minecraft)
+- 《Apex英雄》(Apex Legends)
+- 《守望先锋》(Overwatch)
 - 更多游戏支持持续添加中...
 
 ## 📁 项目结构

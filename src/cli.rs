@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
-#[command(name = "clashfun")]
+#[command(name = "cf")]
 #[command(about = "轻量级游戏加速器")]
 pub struct Cli {
     #[command(subcommand)]
@@ -46,4 +46,10 @@ pub enum Commands {
 
     #[command(about = "检测运行中的游戏")]
     DetectGame,
+
+    #[command(about = "一键卸载程序和配置")]
+    ForceUninstall,
+
+    #[command(about = "清除所有节点配置恢复原始状态")]
+    Reset,
 }

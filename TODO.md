@@ -23,13 +23,15 @@
 
 * [x] **全局通用指令实现** (已完成)
 
-  * [x] `clashfun update` — 从 GitHub release 拉取更新 (基础框架已完成)
-  * [x] `clashfun uninstall` — 卸载二进制和配置 (基础框架已完成)
-  * [x] `clashfun start/stop/restart` — 控制服务 (已完成)
-  * [x] `clashfun set-subscription` — 替换订阅 (已完成)
-  * [x] `clashfun select-node` — 切换节点 (已完成)
-  * [x] `clashfun nodes` — 列出并排序节点 (已完成)
-  * [x] `clashfun auto-select` — 自动选择最优节点 (已完成)
+  * [x] `cf update` — 从 GitHub release 拉取更新 (基础框架已完成)
+  * [x] `cf uninstall` — 卸载二进制和配置 (基础框架已完成)
+  * [x] `cf start/stop/restart` — 控制服务 (已完成)
+  * [x] `cf set-subscription` — 替换订阅 (已完成)
+  * [x] `cf select-node` — 切换节点 (已完成)
+  * [x] `cf nodes` — 列出并排序节点 (已完成)
+  * [x] `cf auto-select` — 自动选择最优节点 (已完成)
+  * [x] `cf force-uninstall` — 一键卸载程序和所有配置 (已完成)
+  * [x] `cf reset` — 清除所有配置恢复原始状态 (已完成)
 
 * [ ] **测试**
 

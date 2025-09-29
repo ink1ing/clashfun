@@ -12,7 +12,7 @@ keywords = ["proxy", "game", "clash", "accelerator", "network"]
 categories = ["command-line-utilities", "network-programming"]
 
 [[bin]]
-name = "clashfun"
+name = "cf"
 path = "src/main.rs"
 
 [dependencies]

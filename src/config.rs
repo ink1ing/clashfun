@@ -25,7 +25,7 @@ impl Default for Config {
 impl Config {
     pub fn config_dir() -> Result<PathBuf> {
         dirs::config_dir()
-            .map(|dir| dir.join("clashfun"))
+            .map(|dir| dir.join("cf"))
             .context("无法获取配置目录")
     }
 
