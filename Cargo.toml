@@ -1,0 +1,38 @@
+[package]
+name = "clashfun"
+version = "0.1.0"
+edition = "2021"
+authors = ["inkling"]
+description = "轻量级游戏加速器，专为游戏优化的网络代理工具"
+license = "MIT"
+repository = "https://github.com/ink1ing/clashfun"
+homepage = "https://github.com/ink1ing/clashfun"
+readme = "README.md"
+keywords = ["proxy", "game", "clash", "accelerator", "network"]
+categories = ["command-line-utilities", "network-programming"]
+
+[[bin]]
+name = "clashfun"
+path = "src/main.rs"
+
+[dependencies]
+# 命令行参数解析
+clap = { version = "4.0", features = ["derive"] }
+# 异步运行时
+tokio = { version = "1.0", features = ["full"] }
+# HTTP 客户端
+reqwest = { version = "0.11", features = ["json"] }
+# 序列化/反序列化
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+# 日志
+log = "0.4"
+env_logger = "0.10"
+# 错误处理
+anyhow = "1.0"
+thiserror = "1.0"
+# 系统相关
+sysinfo = "0.29"
+# 配置目录
+dirs = "5.0"
