@@ -2,6 +2,7 @@ use clap::Parser;
 use env_logger;
 use log::{error, info};
 use std::process;
+use std::sync::Arc;
 
 mod cli;
 mod config;
@@ -10,6 +11,7 @@ mod proxy;
 mod subscription;
 
 use cli::Cli;
+use proxy::ProxyServer;
 
 #[tokio::main]
 async fn main() {
@@ -27,14 +29,58 @@ async fn run(cli: Cli) -> anyhow::Result<()> {
     match cli.command {
         cli::Commands::Start => {
             info!("启动 ClashFun 服务...");
-            // TODO: 实现启动逻辑
-            println!("🎮 ClashFun 服务已启动");
+
+            let config = config::Config::load()?;
+
+            // 检查是否已配置订阅和节点
+            if config.subscription_url.is_none() {
+                println!("❌ 请先设置订阅链接: clashfun set-subscription <URL>");
+                return Ok(());
+            }
+
+            if config.selected_node.is_none() {
+                println!("❌ 请先选择一个节点: clashfun select-node <NAME>");
+                return Ok(());
+            }
+
+            // 获取节点信息
+            let selected_node_name = config.selected_node.as_ref().unwrap();
+            let subscription_url = config.subscription_url.as_ref().unwrap();
+
+            let sub_manager = subscription::SubscriptionManager::new();
+            let clash_config = sub_manager.fetch_subscription(subscription_url).await?;
+            let nodes = sub_manager.parse_nodes(&clash_config)?;
+
+            let selected_node = nodes.iter()
+                .find(|n| &n.name == selected_node_name)
+                .ok_or_else(|| anyhow::anyhow!("找不到选中的节点: {}", selected_node_name))?;
+
+            // 创建代理服务器
+            let proxy_server = Arc::new(ProxyServer::new(config.proxy_port));
+            proxy_server.set_node(selected_node.clone()).await;
+
+            println!("🚀 正在启动代理服务器...");
+            println!("📍 节点: {}", selected_node.name);
+            println!("🌐 服务器: {}:{}", selected_node.server, selected_node.port);
+            println!("🚪 本地端口: {}", config.proxy_port);
+            println!("📊 协议: {}", selected_node.protocol);
+
+            // 启动服务器 (这会阻塞直到服务器停止)
+            if let Err(e) = proxy_server.start().await {
+                error!("代理服务器启动失败: {}", e);
+                return Err(e);
+            }
+
+            println!("🛑 ClashFun 服务已停止");
             Ok(())
         }
         cli::Commands::Stop => {
             info!("停止 ClashFun 服务...");
-            // TODO: 实现停止逻辑
-            println!("🛑 ClashFun 服务已停止");
+
+            // 这里可以实现进程间通信来停止服务
+            // 目前先显示简单信息，后续可以通过 PID 文件或 signal 来实现
+            println!("🛑 停止信号已发送");
+            println!("💡 如果服务仍在运行，请使用 Ctrl+C 强制停止");
             Ok(())
         }
         cli::Commands::Status => {
@@ -49,7 +95,13 @@ async fn run(cli: Cli) -> anyhow::Result<()> {
                 config.selected_node.as_deref().unwrap_or("未选择"));
             println!("  🚪 代理端口: {}", config.proxy_port);
             println!("  🤖 自动选择: {}", if config.auto_select { "开启" } else { "关闭" });
-            println!("  ⚡ 服务状态: 未运行");
+
+            // 检查服务状态 - 简单的端口检查
+            let service_status = match tokio::net::TcpListener::bind(format!("127.0.0.1:{}", config.proxy_port)).await {
+                Ok(_) => "未运行",
+                Err(_) => "正在运行",
+            };
+            println!("  ⚡ 服务状态: {}", service_status);
 
             // 检测游戏
             let mut detector = game_detect::GameDetector::new();

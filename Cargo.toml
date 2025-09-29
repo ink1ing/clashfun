@@ -1,6 +1,6 @@
 [package]
 name = "clashfun"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["inkling"]
 description = "轻量级游戏加速器，专为游戏优化的网络代理工具"
