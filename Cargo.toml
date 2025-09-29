@@ -36,3 +36,5 @@ thiserror = "1.0"
 sysinfo = "0.29"
 # 配置目录
 dirs = "5.0"
+# Base64 编解码
+base64 = "0.21"

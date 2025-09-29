@@ -6,20 +6,20 @@
 
 ## 阶段一：基础可运行 MVP（最高优先级）
 
-* [ ] **项目初始化**
+* [x] **项目初始化** (已完成)
 
-  * [ ] 创建 GitHub 仓库 [ink1ing/clashfun](https://github.com/ink1ing/clashfun)
-  * [ ] 设置 MIT License & README 基础文档
-  * [ ] 初始化 Rust 项目 (`cargo init --bin clashfun`)
-  * [ ] 配置 `.gitignore`（排除 target/、.idea/、临时配置文件）
+  * [x] 创建 GitHub 仓库 [ink1ing/clashfun](https://github.com/ink1ing/clashfun) (本地已完成)
+  * [x] 设置 MIT License & README 基础文档 (已完成)
+  * [x] 初始化 Rust 项目 (`cargo init --bin clashfun`) (已完成)
+  * [x] 配置 `.gitignore`（排除 target/、.idea/、临时配置文件）(已完成)
 
-* [ ] **核心功能实现**
+* [x] **核心功能实现** (基础版已完成)
 
-  * [ ] 支持加载订阅链接并解析节点信息
-  * [ ] 节点延迟测试（TCP ping / UDP 测速）
-  * [ ] 基于延迟或丢包率的最优节点选择逻辑
-  * [ ] 启动本地代理服务并应用节点配置
-  * [ ] 最小 CLI 交互：`--subscription` `--game` `--region` `--auto`
+  * [x] 支持加载订阅链接并解析节点信息 (已完成 - 支持 Clash YAML 和 SS 链接格式)
+  * [x] 节点延迟测试（TCP ping / UDP 测速）(已完成 - TCP 连接测试)
+  * [x] 基于延迟或丢包率的最优节点选择逻辑 (已完成 - 按延迟排序)
+  * [ ] 启动本地代理服务并应用节点配置 (部分完成 - 框架已建立)
+  * [x] 最小 CLI 交互：`set-subscription` `select-node` `nodes` `status` `detect-game` (已完成)
 
 * [ ] **全局通用指令实现**
 

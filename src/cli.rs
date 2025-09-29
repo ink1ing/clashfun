@@ -40,4 +40,7 @@ pub enum Commands {
 
     #[command(about = "卸载程序")]
     Uninstall,
+
+    #[command(about = "检测运行中的游戏")]
+    DetectGame,
 }
