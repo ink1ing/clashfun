@@ -18,7 +18,7 @@
 
 ### 一键安装
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ink1ing/clashfun/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/ink1ing/clashfun/master/install.sh | sh
 ```
 
 ### 手动安装
