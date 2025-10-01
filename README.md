@@ -30,8 +30,10 @@ curl -fsSL https://raw.githubusercontent.com/ink1ing/clashfun/master/install.sh 
 
 ### 1. 设置订阅链接
 ```bash
-cf set-subscription https://your-clash-subscription-url
+cf set-subscription "https://your-clash-subscription-url"
 ```
+
+> **重要提示**：如果订阅链接包含特殊字符（如 `&`、`?` 等），请务必用双引号包围整个 URL，避免被 shell 解析错误。
 
 ### 2. 查看节点列表
 ```bash
