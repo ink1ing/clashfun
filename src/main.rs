@@ -12,6 +12,7 @@ mod game_detect;
 mod proxy;
 mod subscription;
 mod interactive;
+mod updater;
 
 use cli::Cli;
 use proxy::ProxyServer;
@@ -254,9 +255,77 @@ async fn run(cli: Cli) -> anyhow::Result<()> {
         }
         cli::Commands::Update => {
             info!("检查更新...");
-            // TODO: 实现更新逻辑
-            println!("🔄 检查更新中...");
-            println!("✅ 当前已是最新版本");
+
+            let updater = updater::Updater::new();
+
+            // 首先检查版本冲突
+            match updater.check_version_conflicts().await {
+                Ok(conflicts) if !conflicts.is_empty() => {
+                    println!("⚠️  检测到多个版本安装:");
+                    for conflict in &conflicts {
+                        println!("   📁 {}", conflict.display());
+                    }
+                    println!("💡 建议先运行 'cf reset' 清理配置，然后手动删除重复的安装文件");
+                    println!("💡 或者使用 'cf force-uninstall' 进行完全清理后重新安装");
+                }
+                Ok(_) => {
+                    println!("✅ 未检测到版本冲突");
+                }
+                Err(e) => {
+                    warn!("检查版本冲突失败: {}", e);
+                }
+            }
+
+            // 检查更新
+            match updater.check_for_updates().await {
+                Ok(update_info) => {
+                    println!("📊 版本信息:");
+                    println!("   当前版本: {}", update_info.current_version);
+
+                    if let Some(latest) = &update_info.latest_version {
+                        println!("   最新版本: {}", latest);
+                    }
+
+                    if update_info.update_available {
+                        println!("🚀 发现新版本！");
+
+                        if let Some(notes) = &update_info.release_notes {
+                            println!("📝 更新说明:");
+                            for line in notes.lines().take(10) {
+                                println!("   {}", line);
+                            }
+                        }
+
+                        println!("🔄 正在自动更新...");
+
+                        if let Some(download_url) = &update_info.download_url {
+                            match updater.perform_update(download_url).await {
+                                Ok(()) => {
+                                    println!("✅ 更新完成！");
+                                    println!("💡 请重新运行 'cf' 命令使用新版本");
+                                }
+                                Err(e) => {
+                                    error!("更新失败: {}", e);
+                                    println!("❌ 自动更新失败: {}", e);
+                                    println!("💡 请尝试手动更新:");
+                                    println!("   curl -fsSL https://raw.githubusercontent.com/ink1ing/clashfun/master/install.sh | sh");
+                                }
+                            }
+                        } else {
+                            println!("❌ 未找到适合当前平台的更新文件");
+                        }
+                    } else {
+                        println!("✅ 当前已是最新版本");
+                    }
+                }
+                Err(e) => {
+                    error!("检查更新失败: {}", e);
+                    println!("❌ 检查更新失败: {}", e);
+                    println!("💡 请检查网络连接或手动更新:");
+                    println!("   curl -fsSL https://raw.githubusercontent.com/ink1ing/clashfun/master/install.sh | sh");
+                }
+            }
+
             Ok(())
         }
         cli::Commands::Uninstall => {

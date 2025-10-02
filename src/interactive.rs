@@ -178,6 +178,7 @@ impl InteractiveApp {
             "⚙️  /set     - 设置订阅链接",
             "🔄 /auto     - 自动选择最优节点",
             "🎮 /detect   - 检测运行中的游戏",
+            "⬆️  /update   - 检查并更新到最新版本",
             "❓ /help     - 显示帮助信息",
             "🚪 /quit     - 退出程序",
         ];
@@ -241,6 +242,7 @@ impl InteractiveApp {
             Line::from("  /set      - 设置订阅链接"),
             Line::from("  /auto     - 自动选择最优节点"),
             Line::from("  /detect   - 检测运行中的游戏"),
+            Line::from("  /update   - 检查并更新到最新版本"),
             Line::from("  /quit     - 退出程序"),
             Line::from(""),
             Line::from("⌨️  快捷键:"),
@@ -382,6 +384,10 @@ impl InteractiveApp {
                 self.status_message = "🎮 正在检测游戏...".to_string();
                 // TODO: 实现游戏检测
             }
+            "/update" => {
+                self.status_message = "🔄 正在检查更新...".to_string();
+                self.check_and_update().await?;
+            }
             "/help" => {
                 self.current_mode = AppMode::Help;
                 self.status_message = "❓ 显示帮助信息".to_string();
@@ -426,6 +432,41 @@ impl InteractiveApp {
 
         self.status_message = format!("✅ 订阅链接已设置: {}", url);
         self.load_nodes().await?;
+        Ok(())
+    }
+
+    async fn check_and_update(&mut self) -> Result<()> {
+        let updater = crate::updater::Updater::new();
+
+        // 检查更新
+        match updater.check_for_updates().await {
+            Ok(update_info) => {
+                if update_info.update_available {
+                    self.status_message = format!("🚀 发现新版本 {} -> {}，正在更新...",
+                        update_info.current_version,
+                        update_info.latest_version.unwrap_or_else(|| "未知".to_string()));
+
+                    if let Some(download_url) = &update_info.download_url {
+                        match updater.perform_update(download_url).await {
+                            Ok(()) => {
+                                self.status_message = "✅ 更新完成！请重启程序".to_string();
+                            }
+                            Err(e) => {
+                                self.status_message = format!("❌ 更新失败: {}", e);
+                            }
+                        }
+                    } else {
+                        self.status_message = "❌ 未找到适合的更新文件".to_string();
+                    }
+                } else {
+                    self.status_message = format!("✅ 已是最新版本 {}", update_info.current_version);
+                }
+            }
+            Err(e) => {
+                self.status_message = format!("❌ 检查更新失败: {}", e);
+            }
+        }
+
         Ok(())
     }
 }
