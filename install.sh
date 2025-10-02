@@ -76,6 +76,158 @@ get_latest_version() {
     fi
 }
 
+# 检测并清理旧版本
+detect_and_cleanup_old_versions() {
+    echo -e "${BLUE}🔍 检测已安装的版本...${NC}"
+
+    # 常见的安装路径
+    local common_paths=(
+        "/usr/local/bin/cf"
+        "/usr/bin/cf"
+        "/opt/clashfun/cf"
+        "$HOME/.local/bin/cf"
+        "$HOME/bin/cf"
+    )
+
+    # 查找旧版本ClashFun的可能名称
+    local old_names=(
+        "clashfun"
+        "clash-fun"
+        "cf.old"
+        "cf.backup"
+    )
+
+    local found_versions=()
+    local found_old_names=()
+
+    # 检查常见路径中的cf命令
+    for path in "${common_paths[@]}"; do
+        if [ -f "$path" ]; then
+            found_versions+=("$path")
+        fi
+    done
+
+    # 检查PATH中的cf命令
+    if command -v cf >/dev/null 2>&1; then
+        local cf_path=$(which cf 2>/dev/null)
+        if [ -n "$cf_path" ] && [ -f "$cf_path" ]; then
+            # 避免重复添加
+            local already_added=false
+            for existing in "${found_versions[@]}"; do
+                if [ "$existing" = "$cf_path" ]; then
+                    already_added=true
+                    break
+                fi
+            done
+            if [ "$already_added" = false ]; then
+                found_versions+=("$cf_path")
+            fi
+        fi
+    fi
+
+    # 检查旧的程序名称
+    for old_name in "${old_names[@]}"; do
+        if command -v "$old_name" >/dev/null 2>&1; then
+            local old_path=$(which "$old_name" 2>/dev/null)
+            if [ -n "$old_path" ] && [ -f "$old_path" ]; then
+                found_old_names+=("$old_path")
+            fi
+        fi
+    done
+
+    # 检查用户自定义位置
+    for path in "${common_paths[@]}"; do
+        local dir=$(dirname "$path")
+        if [ -d "$dir" ]; then
+            for old_name in "${old_names[@]}"; do
+                local old_path="$dir/$old_name"
+                if [ -f "$old_path" ]; then
+                    found_old_names+=("$old_path")
+                fi
+            done
+        fi
+    done
+
+    # 显示发现的版本
+    if [ ${#found_versions[@]} -gt 0 ] || [ ${#found_old_names[@]} -gt 0 ]; then
+        echo -e "${YELLOW}⚠️  发现已安装的版本:${NC}"
+
+        for version in "${found_versions[@]}"; do
+            echo -e "   📁 $version"
+            # 尝试获取版本信息
+            if [ -x "$version" ]; then
+                local version_info=$("$version" --version 2>/dev/null || echo "版本信息无法获取")
+                echo -e "      版本: $version_info"
+            fi
+        done
+
+        for old_version in "${found_old_names[@]}"; do
+            echo -e "   📁 $old_version (旧程序名)"
+        done
+
+        echo ""
+        echo -e "${BLUE}🧹 正在清理旧版本以避免冲突...${NC}"
+
+        # 清理找到的版本
+        for version in "${found_versions[@]}" "${found_old_names[@]}"; do
+            if [ -f "$version" ]; then
+                local file_dir=$(dirname "$version")
+                if [ -w "$file_dir" ]; then
+                    echo -e "   🗑️  删除: $version"
+                    rm -f "$version"
+                elif [ -n "$USE_SUDO" ] || command -v sudo >/dev/null 2>&1; then
+                    echo -e "   🗑️  删除 (需要权限): $version"
+                    sudo rm -f "$version"
+                else
+                    echo -e "   ❌ 无法删除: $version (权限不足)"
+                fi
+            fi
+        done
+
+        # 清理配置文件和缓存
+        cleanup_old_configs
+
+        echo -e "${GREEN}✅ 旧版本清理完成${NC}"
+    else
+        echo -e "${GREEN}✅ 未检测到旧版本${NC}"
+    fi
+}
+
+# 清理旧的配置文件和缓存
+cleanup_old_configs() {
+    echo -e "${BLUE}🧹 清理旧的配置文件...${NC}"
+
+    # 清理可能的配置目录
+    local config_dirs=(
+        "$HOME/.config/cf"
+        "$HOME/.config/clashfun"
+        "$HOME/.clashfun"
+        "$HOME/.cf"
+    )
+
+    # 清理可能的缓存目录
+    local cache_dirs=(
+        "$HOME/.cache/cf"
+        "$HOME/.cache/clashfun"
+        "/tmp/clashfun"
+        "/tmp/cf"
+    )
+
+    for config_dir in "${config_dirs[@]}"; do
+        if [ -d "$config_dir" ]; then
+            echo -e "   🗑️  清理配置: $config_dir"
+            rm -rf "$config_dir"
+        fi
+    done
+
+    for cache_dir in "${cache_dirs[@]}"; do
+        if [ -d "$cache_dir" ]; then
+            echo -e "   🗑️  清理缓存: $cache_dir"
+            rm -rf "$cache_dir"
+        fi
+    done
+}
+
 # 检查权限
 check_permissions() {
     if [ ! -w "$INSTALL_DIR" ]; then
@@ -129,8 +281,31 @@ install_binary() {
 verify_installation() {
     if command -v cf >/dev/null 2>&1; then
         echo -e "${GREEN}✅ ClashFun 安装成功！${NC}"
+
+        # 获取安装路径
+        local installed_path=$(which cf)
+        echo -e "${BLUE}📍 安装位置: ${installed_path}${NC}"
+
+        # 显示版本信息
         echo -e "${BLUE}🎮 版本信息:${NC}"
         cf --version
+
+        # 检查是否还有其他cf命令存在
+        echo -e "${BLUE}🔍 验证版本唯一性...${NC}"
+        local all_cf_paths=$(which -a cf 2>/dev/null | head -5)
+        local cf_count=$(echo "$all_cf_paths" | wc -l)
+
+        if [ "$cf_count" -gt 1 ]; then
+            echo -e "${YELLOW}⚠️  系统中发现多个cf命令:${NC}"
+            echo "$all_cf_paths" | while read -r path; do
+                if [ -n "$path" ]; then
+                    echo -e "   📁 $path"
+                fi
+            done
+            echo -e "${YELLOW}💡 建议运行 'cf update' 来统一版本${NC}"
+        else
+            echo -e "${GREEN}✅ 系统中只有一个cf命令，版本统一${NC}"
+        fi
     else
         echo -e "${RED}❌ 安装失败，请检查 PATH 环境变量${NC}"
         echo -e "${YELLOW}💡 请将 $INSTALL_DIR 添加到 PATH 中${NC}"
@@ -148,6 +323,11 @@ show_usage() {
     echo "4. 启动加速服务: cf start"
     echo "5. 查看服务状态: cf status"
     echo ""
+    echo -e "${BLUE}🔄 版本管理:${NC}"
+    echo "• 检查更新: cf update"
+    echo "• 交互模式: cf (然后使用 /update)"
+    echo "• 重新安装: curl -fsSL https://raw.githubusercontent.com/${REPO}/master/install.sh | sh"
+    echo ""
     echo -e "${BLUE}📚 更多命令请查看: cf --help${NC}"
     echo -e "${BLUE}🔗 项目地址: https://github.com/${REPO}${NC}"
 }
@@ -160,6 +340,7 @@ main() {
     detect_platform
     get_latest_version
     check_permissions
+    detect_and_cleanup_old_versions
     install_binary
     verify_installation
     show_usage
