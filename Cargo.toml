@@ -38,3 +38,7 @@ sysinfo = "0.29"
 dirs = "5.0"
 # Base64 编解码
 base64 = "0.21"
+# 交互式终端
+crossterm = "0.27"
+# 终端UI
+ratatui = "0.24"

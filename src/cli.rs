@@ -6,7 +6,7 @@ use clap::{Parser, Subcommand};
 #[command(about = "轻量级游戏加速器")]
 pub struct Cli {
     #[command(subcommand)]
-    pub command: Commands,
+    pub command: Option<Commands>,
 }
 
 #[derive(Subcommand)]

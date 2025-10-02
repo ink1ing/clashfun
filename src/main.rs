@@ -11,6 +11,7 @@ mod config;
 mod game_detect;
 mod proxy;
 mod subscription;
+mod interactive;
 
 use cli::Cli;
 use proxy::ProxyServer;
@@ -28,7 +29,12 @@ async fn main() {
 }
 
 async fn run(cli: Cli) -> anyhow::Result<()> {
-    match cli.command {
+    // 如果没有提供子命令，启动交互模式
+    if cli.command.is_none() {
+        return run_interactive_mode().await;
+    }
+
+    match cli.command.unwrap() {
         cli::Commands::Start => {
             info!("启动 ClashFun 服务...");
 
@@ -432,4 +438,20 @@ async fn run(cli: Cli) -> anyhow::Result<()> {
             Ok(())
         }
     }
+}
+
+async fn run_interactive_mode() -> anyhow::Result<()> {
+    info!("启动 ClashFun 交互模式...");
+
+    // 加载配置
+    let config = Arc::new(tokio::sync::RwLock::new(config::Config::load().unwrap_or_default()));
+
+    // 初始化游戏检测器
+    let game_detector = Arc::new(tokio::sync::RwLock::new(game_detect::GameDetector::new()));
+
+    // 创建并运行交互式应用
+    let mut app = interactive::InteractiveApp::new(config, game_detector);
+    app.run().await?;
+
+    Ok(())
 }
